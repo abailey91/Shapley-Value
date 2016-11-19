@@ -5,17 +5,14 @@ library(ggplot2)
 source("CalculateShapley.R")
 source("SimulationData.R")
 
-#load in a data set
-#test_data <- read.csv("test_data.csv",header=T,sep=",") 
-
-#debug(GenerateSimulatedExposurePaths)
+#generate a fake data set
 test_data <- GenerateSimulatedExposurePaths(
   num_rows = 500000,
   unique_users = 50000,
-  channel_names = c("Paid.Social","Paid.Search","Affiliates","Display","Direct","Natural.Search"))
+  channel_names = c("Paid.Social","Paid.Search","Affiliates","Display","Direct","Natural.Search"),
+  TRUE)
 
 #compute the shapley value contributions in % form
-#debug(CalculateShapley)
 model.fit <- CalculateShapley(test_data) 
 
 #plot weights
@@ -27,16 +24,15 @@ ggplot(data=weights,aes(x=Channels,y=Weights,fill=Channels)) +
 #plot conversions - bar and pie charts
 #bar
 attr_conversions <- data.frame(Conversions=model.fit$attributedConversions,Channel=names(model.fit$attributedConversions))
-ggplot(data = attr_conversions,aes(x=Channels,y=Conversions,fill=Channels)) + 
+ggplot(data = attr_conversions,aes(x=Channel,y=Conversions,fill=Channel)) + 
   geom_bar(stat="identity") +
   labs(title="Attributed Conversions",x="Channel",y="Conversions")
 
 #pie
-ggplot(data = attr_conversions,aes(x="",y=Conversions,fill=Channels)) + 
+ggplot(data = attr_conversions,aes(x="",y=Conversions,fill=Channel)) + 
     geom_bar(stat="identity") +
   coord_polar(theta = "y") +
   labs(title="Attributed Conversions",x=NULL,y="Conversions")
-  
   
 
 #last touch vs attributed

@@ -1,10 +1,10 @@
 
 
-
+source("FinitePopulationCorrection.R")
 
 # generate a fake exposure path data set
 
-GenerateSimulatedExposurePaths <- function(num_rows,unique_users,channel_names){
+GenerateSimulatedExposurePaths <- function(num_rows,unique_users,channel_names,apply_pop_correction=NULL){
 
 set.seed(265)
 
@@ -65,6 +65,21 @@ modelling_data <- cbind(modelling_data,Conversion_Date=as.Date(Conversion_Date),
 modelling_data <- modelling_data[,c(colnames(modelling_data)[1],"Conversion_Date","Last_Event_Channel",modelling_data_colnames)]
 #remove paths variable
 rm(paths)
+
+
+#population correction application
+if(apply_pop_correction)
+{
+  zero_media <- data.frame(matrix(0,nrow=1,ncol = (length(channel_names)+1)))
+  colnames(zero_media) <- modelling_data_colnames
+  num_correction <- FinitePopulationCorrection(unique_users,unique_users/0.1)
+  pop_correction_rows <- data.frame(User.ID=((unique_users+1):(unique_users+num_correction)),
+                                    Conversion_Date=NA,
+                                    Last_Event_Channel="None",
+                                    zero_media
+                                    )
+  modelling_data <- rbind(modelling_data,pop_correction_rows)
+}
 
 return(modelling_data)
 }
