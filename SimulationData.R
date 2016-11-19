@@ -22,6 +22,14 @@ exposure_data$Date <- as.Date(exposure_data$Date, origin = "2016-01-01")
 exposure_data$Channel <- channel_names[exposure_data$Channel]
 
 
+last_event_channel <- lapply(unique(exposure_data$User.ID),function(x){
+  user_data <- filter(exposure_data,User.ID==x)
+  
+  user_data[user_data$Date==max(user_data$Date),]$Channel[1]
+})
+
+last_event_channel <- do.call("rbind",last_event_channel)
+
 #convert raw data to modelling format
 
 #generate binary variables for each channel
@@ -46,9 +54,15 @@ modelling_data <- cbind(
   Converted = sample(c(0:1),nrow(paths),replace = TRUE,
                      prob = c(0.88,0.12)))
 
-Conversion_Date <- ifelse(modelling_data$Converted==1,as.Date(sample(1:32,32), origin = "2016-01-01"))
-modelling_data <- cbind(modelling_data,Conversion_Date)
+#look at ways of making time stamp data
+Conversion_Date <- dplyr::if_else(modelling_data$Converted==1,as.character(as.Date(sample(1:32,1), origin = "2016-01-01")),"NA")
+Conversion_Date[Conversion_Date=="NA"]<-NA
 
+modelling_data_colnames <- colnames(modelling_data)[-1]
+
+modelling_data <- cbind(modelling_data,Conversion_Date=as.Date(Conversion_Date),Last_Event_Channel=last_event_channel)
+
+modelling_data <- modelling_data[,c(colnames(modelling_data)[1],"Conversion_Date","Last_Event_Channel",modelling_data_colnames)]
 #remove paths variable
 rm(paths)
 

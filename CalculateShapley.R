@@ -30,15 +30,15 @@ CalculateShapley <- function(data){
 final_rates <- data.frame()
 
 #loop through all available variables
-for(i in 1:ncol(data[,-c(1,ncol(data))])){
+for(i in 1:ncol(data[,-c(1:3,ncol(data))])){
 
   #calculate potential combinations for each level i
-  combinations <- combn(colnames(data[,-c(1,ncol(data))]),i)
+  combinations <- combn(colnames(data[,-c(1:3,ncol(data))]),i)
   
   #generate filters to split the data based on unique combinations
   dots <- apply(combinations,2,function(x){
     
-    temp_names <- colnames(data)[-c(1,ncol(data))]
+    temp_names <- colnames(data)[-c(1:3,ncol(data))]
     
     missing_vars <- temp_names[!(temp_names %in% x)] 
     
@@ -81,7 +81,7 @@ for(i in 1:ncol(data[,-c(1,ncol(data))])){
 colnames(final_rates) <- "probability"
 
 #store names of individual channels
-channel_names <- colnames(data)[-c(1,ncol(data))]
+channel_names <- colnames(data)[-c(1:3,ncol(data))]
 
 #compute contributions
 #white paper - http://eprints.soton.ac.uk/380534/1/GHLEFMG_FGMJHM_VJ1QM9QF.pdf - formula on page 3
@@ -95,20 +95,27 @@ contributions <- do.call("rbind",contributions)
 
 #calculate weights to apply based on contribution data frame
 weights <- contributions/sum(contributions)
+weights[is.nan(weights)] <- 0 
 rownames(weights) <- channel_names
 
 #calculate conversion numbers by channel
 converters_only <- filter(data,Converted==1)
-conversions <- weights * converters_only[-c(1,ncol(converters_only))]
+conversions <- weights * converters_only[-c(1:3,ncol(converters_only))]
 conversions <- colSums(conversions)
 conversions <- c(conversions,Base=(nrow(converters_only)-sum(conversions)))
+
+#last event
+last_event <- as.data.frame(summarise(group_by(converters_only,Last_Event_Channel),sum(Converted)))
+colnames(last_event) <- c("Channel","Conversions")
+
 
 return(list(
   ShapleyValues=contributions,
   Weights=weights,
   Data=data,
   Conversion_Rates=final_rates,
-  attributedConversions=conversions
+  attributedConversions=conversions,
+  lastEventConversions=last_event
   )
 )
 }
