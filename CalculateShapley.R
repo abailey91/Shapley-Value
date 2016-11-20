@@ -58,7 +58,7 @@ for(i in 1:ncol(data[,-c(1:3,ncol(data))])){
   
   #calculate conversion rates of each path type
   conversion_rates <- do.call("rbind",lapply(dots,function(x){
-    filtered_data <- filter_(test_data,x)
+    filtered_data <- filter_(data,x)
     
     nrow(filter(filtered_data,Converted==1))/nrow(filtered_data)
     
